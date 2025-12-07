@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hospital Bill Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #eef2f3;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: #0077cc;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 28px;
+        }
+        .container {
+            width: 90%;
+            margin: 20px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #0002;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px 0;
+            font-size: 16px;
+        }
+        input, select {
+            width: 100%;
+        }
+        button {
+            background: #0077cc;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #005fa3;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        th {
+            background: #0077cc;
+            color: white;
+        }
+        .actions button {
+            width: 60px;
+            margin: 0 2px;
+        }
+        h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+<header>Hospital Bill Management System</header>
+
+<div class="container">
+
+    <h2>➤ Add / Edit Patient Bill</h2>
+
+    <input type="hidden" id="editIndex">
+
+    <input type="text" id="pname" placeholder="Patient Name">
+    <input type="number" id="age" placeholder="Age">
+    <input type="text" id="disease" placeholder="Disease / Reason">
+    <input type="text" id="refdoc" placeholder="Referring Doctor">
+    <input type="date" id="admitdate" placeholder="Admit Date">
+    <input type="date" id="dischargedate" placeholder="Discharge Date">
+    <input type="number" id="bill" placeholder="Bill Amount (₹)">
+    
+    <button onclick="saveBill()">Save Bill</button>
+
+    <h2>➤ All Bills</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Patient Name</th>
+                <th>Age</th>
+                <th>Disease</th>
+                <th>Ref Doctor</th>
+                <th>Admit Date</th>
+                <th>Discharge Date</th>
+                <th>Bill (₹)</th>
+                <th class="actions">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="billTable"></tbody>
+    </table>
+
+    <h2>Total Amount: ₹ <span id="totalAmount">0</span></h2>
+
+    <button onclick="printBills()">Print Bills</button>
+</div>
+
+<script>
+    let bills = [];
+
+    function saveBill() {
+        const pname = document.getElementById("pname").value;
+        const age = document.getElementById("age").value;
+        const disease = document.getElementById("disease").value;
+        const refdoc = document.getElementById("refdoc").value;
+        const admitdate = document.getElementById("admitdate").value;
+        const dischargedate = document.getElementById("dischargedate").value;
+        const billAmount = document.getElementById("bill").value;
+
+        if (!pname || !age || !disease || !refdoc || !admitdate || !dischargedate || !billAmount) {
+            alert("Please fill all fields!");
+            return;
+        }
+
+        const editIndex = document.getElementById("editIndex").value;
+
+        if (editIndex === "") {
+            // Add new
+            bills.push({
+                pname, age, disease, refdoc, admitdate, dischargedate, billAmount: parseFloat(billAmount)
+            });
+        } else {
+            // Edit existing
+            bills[editIndex] = { pname, age, disease, refdoc, admitdate, dischargedate, billAmount: parseFloat(billAmount) };
+            document.getElementById("editIndex").value = "";
+        }
+
+        clearInputs();
+        renderTable();
+    }
+
+    function clearInputs() {
+        document.getElementById("pname").value = "";
+        document.getElementById("age").value = "";
+        document.getElementById("disease").value = "";
+        document.getElementById("refdoc").value = "";
+        document.getElementById("admitdate").value = "";
+        document.getElementById("dischargedate").value = "";
+        document.getElementById("bill").value = "";
+    }
+
+    function renderTable() {
+        const table = document.getElementById("billTable");
+        table.innerHTML = "";
+        let total = 0;
+
+        bills.forEach((b, index) => {
+            const row = table.insertRow();
+            row.insertCell(0).innerText = b.pname;
+            row.insertCell(1).innerText = b.age;
+            row.insertCell(2).innerText = b.disease;
+            row.insertCell(3).innerText = b.refdoc;
+            row.insertCell(4).innerText = b.admitdate;
+            row.insertCell(5).innerText = b.dischargedate;
+            row.insertCell(6).innerText = "₹ " + b.billAmount.toFixed(2);
+
+            const actionsCell = row.insertCell(7);
+            actionsCell.className = "actions";
+            actionsCell.innerHTML = `
+                <button onclick="editBill(${index})">Edit</button>
+                <button onclick="deleteBill(${index})">Del</button>
+            `;
+            total += b.billAmount;
+        });
+
+        document.getElementById("totalAmount").innerText = total.toFixed(2);
+    }
+
+    function editBill(index) {
+        const b = bills[index];
+        document.getElementById("pname").value = b.pname;
+        document.getElementById("age").value = b.age;
+        document.getElementById("disease").value = b.disease;
+        document.getElementById("refdoc").value = b.refdoc;
+        document.getElementById("admitdate").value = b.admitdate;
+        document.getElementById("dischargedate").value = b.dischargedate;
+        document.getElementById("bill").value = b.billAmount;
+        document.getElementById("editIndex").value = index;
+    }
+
+    function deleteBill(index) {
+        if (confirm("Are you sure you want to delete this bill?")) {
+            bills.splice(index, 1);
+            renderTable();
+        }
+    }
+
+    function printBills() {
+        let printContent = "<h2>Hospital Bills</h2><table border='1' cellspacing='0' cellpadding='10'><tr><th>Patient Name</th><th>Age</th><th>Disease</th><th>Ref Doctor</th><th>Admit Date</th><th>Discharge Date</th><th>Bill (₹)</th></tr>";
+        bills.forEach(b => {
+            printContent += `<tr>
+                <td>${b.pname}</td>
+                <td>${b.age}</td>
+                <td>${b.disease}</td>
+                <td>${b.refdoc}</td>
+                <td>${b.admitdate}</td>
+                <td>${b.dischargedate}</td>
+                <td>₹ ${b.billAmount.toFixed(2)}</td>
+            </tr>`;
+        });
+        printContent += `</table><h3>Total Amount: ₹ ${bills.reduce((a,b)=>a+b.billAmount,0).toFixed(2)}</h3>`;
+        const newWin = window.open("");
+        newWin.document.write(printContent);
+        newWin.print();
+        newWin.close();
+    }
+</script>
+
+</body>
+</html>
